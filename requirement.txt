@@ -1,0 +1,13 @@
+# Python 3.12. Create a fresh conda environment; see README.md.
+# Install the CPU or CUDA build of torch first using the README command.
+# The public version pin accepts the matching +cpu / +cu132 build.
+torch==2.14.0
+numpy==2.5.2
+pandas==3.0.5
+scikit-learn==1.9.0
+matplotlib==3.11.1
+xgboost==3.4.1
+ipykernel==7.3.0
+
+# Direct dependencies only; this is not a complete transitive lock file.
+# JSON and unittest are included in Python. No torchvision/torchaudio needed.

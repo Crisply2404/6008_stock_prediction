@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.env
+.venv/
+artifacts/
+/private/
+*.pt
+*.ubj
+Stock price project.docx
+__MACOSX/
+._*
