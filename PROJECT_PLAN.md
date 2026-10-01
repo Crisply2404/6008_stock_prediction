@@ -163,4 +163,4 @@ window_start,signal_date,target_date,actual_return,actual_direction,zero_return,
 
 TSLA、多股票、文本特征和回测均留待后续讨论。此前接受的回测初步设想（收盘信号、次日开盘成交、每 5 个交易日调仓、只做多、多股票 Top-5 等权、单边成本 10 bps）仅作后续参考，不用于当前单股票模型评价，实施前需另行对齐。
 
-根目录仅保留 `README.md` 和 `PROJECT_PLAN.md` 两份共享 Markdown。个人阅读笔记统一放入 `private/`，不作为组员运行项目的依赖。新的共同约定应更新本文；命令、依赖和使用方法应更新 README。
+共享文档分工：`README.md` 说明运行方法，`PROJECT_PLAN.md` 记录共同约定，[cooperation.md](cooperation.md) 说明 GitHub 协作步骤。个人阅读笔记统一放入 `private/`，不作为组员运行项目的依赖。新的共同约定应更新本文；命令、依赖和使用方法应更新 README。

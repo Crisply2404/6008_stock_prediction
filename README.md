@@ -2,6 +2,8 @@
 
 本项目用苹果股票和 Nasdaq 市场历史信息，预测 AAPL 下一交易日的收盘收益率，并辅助评价涨跌方向。小组实验约定、成员待办和需要同步的信息见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
 
+GitHub 分支开发、提交、PR 审查和冲突处理步骤见 [小组协作指南](cooperation.md)。
+
 ## 1. 当前已经完成什么
 
 - 从原始 CSV 构造共同数据集：每天 8 个特征、最近 60 个交易日作为输入。
@@ -197,6 +199,7 @@ stock_prediction/
 ├── main.py                   # 日常使用的实验入口
 ├── README.md                 # 当前进展和操作手册
 ├── PROJECT_PLAN.md           # 共同约定、成员任务、待同步事项
+├── cooperation.md            # GitHub 分支与 PR 协作步骤
 ├── requirement.txt           # Python 直接依赖版本
 ├── configs/aapl.json         # 日期、窗口、种子和模型参数
 ├── data/                     # 六份共享 CSV，直接放在该目录
@@ -212,7 +215,7 @@ stock_prediction/
 └── private/                  # 个人笔记，不提交 Git
 ```
 
-根目录只保留两份共享 Markdown。新增个人分析放入 `private/`；共同运行信息和约定分别维护在 README 与 PROJECT_PLAN 中。
+共享文档分工：README 说明运行方法，PROJECT_PLAN 记录共同约定，cooperation 说明 GitHub 协作步骤。新增个人分析放入 `private/`。
 
 ## 6. 当前实现的边界
 
