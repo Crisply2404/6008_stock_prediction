@@ -76,13 +76,12 @@ python -c "import torch; assert torch.cuda.is_available(), 'CUDA unavailable'; x
 
 ## 3. 准备数据
 
-向小组获取同一版本的数据，并保留下面的相对位置：
+数据随仓库共享，克隆或更新仓库后保留下面的相对位置：
 
 ```text
 stock_prediction/
 └── data/
-    └── data1/
-        └── AAPL_Apple_stock_data.csv
+    └── AAPL_Apple_stock_data.csv
 ```
 
 当前训练只读取这份原始 CSV。它包含 AAPL 和 Nasdaq 的行情字段，代码会重新计算特征；无需把 `with_features.csv` 或 `standardized.csv` 作为训练输入。TSLA 尚未接入当前实验配置。
@@ -90,7 +89,7 @@ stock_prediction/
 检查文件是否存在，并打印文件指纹：
 
 ```bash
-python -c "from pathlib import Path; import hashlib; p=Path('data/data1/AAPL_Apple_stock_data.csv'); print(p.exists()); print(hashlib.sha256(p.read_bytes()).hexdigest())"
+python -c "from pathlib import Path; import hashlib; p=Path('data/AAPL_Apple_stock_data.csv'); print(p.exists()); print(hashlib.sha256(p.read_bytes()).hexdigest())"
 ```
 
 当前参考数据的 SHA-256 为：
@@ -189,7 +188,7 @@ python main.py --config configs/aapl.json
 
 提交模型代码、所用配置和一个 `status=complete` 的完整实验结果目录，并简要说明实验目的、改动和结论。不要只提交截图或一个准确率数字。具体输出约定见 [项目规划](PROJECT_PLAN.md)。
 
-`data/`、`artifacts/`、模型权重、课程文档和 `private/` 已被 Git 忽略。共享代码仓库不会自动共享数据和实验输出，需要通过小组约定的位置单独提供数据与选定的结果包。
+`data/` 中的六份 CSV 随仓库共享；当前训练只读取 AAPL 原始数据，其余文件供核对和后续实验使用。`artifacts/`、模型权重、课程文档和 `private/` 已被 Git 忽略，选定的实验结果包需要通过小组约定的位置单独共享。
 
 ## 5. 文件结构
 
@@ -200,7 +199,7 @@ stock_prediction/
 ├── PROJECT_PLAN.md           # 共同约定、成员任务、待同步事项
 ├── requirement.txt           # Python 直接依赖版本
 ├── configs/aapl.json         # 日期、窗口、种子和模型参数
-├── data/                     # 小组共享的原始数据，本地放置
+├── data/                     # 六份共享 CSV，直接放在该目录
 ├── src/
 │   ├── data.py               # 共同的数据处理
 │   ├── baselines.py          # 简单预测基线

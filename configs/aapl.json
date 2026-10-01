@@ -1,6 +1,6 @@
 {
   "ticker": "AAPL",
-  "data_path": "data/data1/AAPL_Apple_stock_data.csv",
+  "data_path": "data/AAPL_Apple_stock_data.csv",
   "start": "2010-01-01",
   "train_end": "2021-12-31",
   "validation_end": "2023-12-31",
