@@ -5,9 +5,6 @@ import numpy as np
 import pandas as pd
 from lightgbm import LGBMRegressor, early_stopping, log_evaluation
 
-from src.data import FEATURES
-
-
 def _feature_names(window, features):
     """Name flattened values by relative day and shared feature."""
     return [
@@ -27,8 +24,8 @@ def fit_predict(dataset, settings, seed):
     started = time.perf_counter()
     if (dataset.train.X.ndim != 3 or dataset.validation.X.ndim != 3
             or dataset.train.X.shape[1:] != dataset.validation.X.shape[1:]
-            or dataset.train.X.shape[2] != len(FEATURES)):
-        raise ValueError("Expected aligned [samples, window, 8] feature windows")
+            or dataset.train.X.shape[2] != len(dataset.features)):
+        raise ValueError("Expected aligned [samples, window, channels] matching dataset.features")
     window = dataset.train.X.shape[1]
     channels = dataset.train.X.shape[2]
     train = dataset.transform(dataset.train.X).reshape(len(dataset.train.y), -1)
@@ -54,7 +51,7 @@ def fit_predict(dataset, settings, seed):
     if early_stopping_rounds > 0:
         callbacks.append(early_stopping(early_stopping_rounds, first_metric_only=True,
                                        verbose=False))
-    names = _feature_names(window, FEATURES)
+    names = _feature_names(window, dataset.features)
     train_frame = pd.DataFrame(train, columns=names)
     validation_frame = pd.DataFrame(validation, columns=names)
     model.fit(

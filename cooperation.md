@@ -71,16 +71,16 @@ git switch -c model/lstm-xiaowang
 | 文件 | 工作 |
 |---|---|
 | `src/models/lstm.py` | 新增模型及 `fit_predict` 接口 |
-| `configs/aapl_lstm.json` | 复制公共配置，保留共同数据规则，增加模型参数 |
+| `configs/aapl.json` | 在统一配置中维护对应模型参数，保留共同数据规则 |
 | `scripts/run_experiment.py` | 接入模型选项、训练调用和权重保存 |
-| `tests/` | 对新增模型的关键行为添加必要检查 |
+| `tests/test_models.py` | 对新增模型的关键行为添加必要检查 |
 | `README.md` | 补充实际可执行的运行方法 |
 
-上述 LSTM 文件和命令接入属于待完成工作。当前入口仅支持 `baselines`、`xgboost`、`patchtst`，不能仅创建模型文件就直接运行 `--models lstm`。
+LSTM 和 GRU 已按上述方式接入，可分别运行 `python main.py --models lstm` 和 `python main.py --models gru`。当前入口支持 `baselines`、`xgboost`、`lightgbm`、`patchtst`、`lstm`、`gru`。后续新增模型也应同时提供实现、配置、入口和验证记录。
 
-复用公共数据处理和评价代码。修改 `src/data.py`、`src/evaluate.py`、原始数据或共同时间划分前，先与小组同步；模型自己的参数放在独立配置中。多人需要编辑同一个实验入口时，应在 PR 中指出，便于协调。
+复用公共数据处理和评价代码。修改 `src/data.py`、`src/evaluate.py`、原始数据或共同时间划分前，先与小组同步；模型自己的参数放在所选股票配置（如 `configs/aapl.json`、`configs/tsla.json`）的对应模型段落中；每次运行保存配置快照。多人需要编辑同一个实验入口时，应在 PR 中指出，便于协调。
 
-共同实验至少保持：相同数据版本、AAPL 次日收益目标、60 日窗口、8 个特征、训练与验证日期、收益单位和评价指标。具体约定以 PROJECT_PLAN 为准。最终测试集继续封存。
+共同实验至少保持：相同股票与数据版本、次日收益目标、60 日窗口、相同特征方案、训练与验证日期、收益单位和评价指标。原方案 `nasdaq_features=all` 为 8 特征；Nasdaq 精简对照 `return_volume` 为 6 特征，两者分目录保存。进行该特征对照时只改变这一选项，优先复用旧实验配置快照，保持其他条件一致；提交结果时注明方案。具体命令和约定以 README、PROJECT_PLAN 为准。最终测试集继续封存。
 
 ## 5. 检查、提交和推送
 
@@ -97,14 +97,14 @@ git diff
 只把本次需要提交的文件加入暂存区。例如完成上述 LSTM 接入后，根据实际修改选择：
 
 ```bash
-git add src/models/lstm.py configs/aapl_lstm.json
+git add src/models/lstm.py configs/aapl.json
 git add scripts/run_experiment.py README.md
 git diff --cached --stat
 git diff --cached --name-only
 git diff --cached
 ```
 
-新增测试文件也应按实际文件名加入。文档任务则只加入相应文档。核对暂存区后提交：
+模型检查统一加入 `tests/test_models.py`，提交时也应包含其改动。文档任务则只加入相应文档。核对暂存区后提交：
 
 ```bash
 git commit -m "Add LSTM model and experiment configuration"
@@ -210,5 +210,9 @@ git push
 GitHub PR 合并代码和配置；实验结果目录通过小组约定的位置单独共享。在 PR 中提供对应结果包位置，至少包含逐日预测、指标、配置、数据与环境记录、训练记录及模型权重。
 
 结果整合者先核对数据版本和实验约定，再核对预测目标日期与真实收益，按 `target_date` 对齐各模型，并使用公共评价代码重新计算指标。不要只收集截图，也不要静默删除不匹配的日期。
+
+展示结果时，两本现有 Notebook 都必须设置 `RUN_NAME = "实际实验目录名"`。股票名称、原始数据路径及实验参数由该目录的 `config.json` 提供；不靠 Notebook 文件名或目录名识别股票，也不自动寻找最新结果。目录不存在、结果未完成或必要文件缺失时应补齐正确结果包，不绕过检查。修改目录名后从头运行，并在分享图表时标明股票和实验目录。
+
+新增股票的实验需提供完整配置快照、符合现有公共格式的原始数据和完整结果包；无需为每只股票重写展示逻辑。不同股票的结果应分开报告。
 
 实际负责人、共享位置和最终测试安排由小组确认，并更新 PROJECT_PLAN。

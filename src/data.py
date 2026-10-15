@@ -13,6 +13,16 @@ FEATURES = [
 ]
 
 
+def selected_features(config):
+    """Default to the original eight features, including for older snapshots."""
+    mode = config.get("nasdaq_features", "all")
+    if mode == "all":
+        return FEATURES.copy()
+    if mode == "return_volume":
+        return FEATURES[:4] + ["nasdaq_return", "nasdaq_vol_change"]
+    raise ValueError("nasdaq_features must be 'all' or 'return_volume'")
+
+
 @dataclass
 class Samples:
     """Aligned inputs and future labels / 对齐的历史输入与未来标签。"""
@@ -33,6 +43,7 @@ class Dataset:
     target_scale: float
     feature_frame: pd.DataFrame
     audit: dict
+    features: list[str]
 
     def transform(self, X):
         """Use training statistics only / 只应用训练区间统计量。"""
@@ -56,6 +67,7 @@ def build_dataset(raw, config):
 
     先截断到验证期，再构造特征；缺失日不删除，避免把间隔两日误当成次日。
     """
+    features = selected_features(config)
     window = config["window"]
     if not isinstance(window, int) or window < 1:
         raise ValueError("window must be a positive integer")
@@ -84,7 +96,11 @@ def build_dataset(raw, config):
                 | (raw[p + "close"] < low - 1e-8)).any():
             raise ValueError(f"Inconsistent OHLC for {p or 'stock'}")
     frame = make_features(raw)
-    values = frame[FEATURES].to_numpy(dtype=np.float64)
+    # Keep the full-feature eligibility rule for a controlled ablation: removing
+    # a channel must not silently introduce extra dates with missing market data.
+    valid_rows = np.isfinite(frame[FEATURES].to_numpy(dtype=np.float64)).all(axis=1)
+    frame = frame[features].copy()
+    values = frame.to_numpy(dtype=np.float64)
     # 目标与原始下一行绑定，不能在 dropna 后重新 shift / Shift before any filtering.
     labels = (raw.close.shift(-1) / raw.close - 1).to_numpy()
     buckets = {name: [] for name in ("train", "validation")}
@@ -94,7 +110,7 @@ def build_dataset(raw, config):
         target_date = raw.date.iloc[i + 1]
         partition = "train" if target_date <= train_end else "validation"
         x = values[i - window + 1:i + 1]
-        if not np.isfinite(x).all() or not np.isfinite(labels[i]):
+        if not valid_rows[i - window + 1:i + 1].all() or not np.isfinite(labels[i]):
             skipped[partition] += 1
             continue
         buckets[partition].append((i, x.copy(), labels[i]))
@@ -124,6 +140,9 @@ def build_dataset(raw, config):
     if y_scale == 0:
         y_scale = 1.0
     audit = {
+        "nasdaq_features": config.get("nasdaq_features", "all"),
+        "features": features,
+        "sample_eligibility": "all_eight_features_finite",
         "read_cutoff": str(val_end.date()),
         "split_by": "target_date",
         "selected_raw_rows": len(raw),
@@ -140,7 +159,7 @@ def build_dataset(raw, config):
     }
     frame.insert(0, "date", raw.date)
     return Dataset(train, val, unique_inputs.mean(axis=0), scale,
-                   float(train.y.mean()), y_scale, frame, audit)
+                   float(train.y.mean()), y_scale, frame, audit, features)
 
 
 def load_dataset(config, root):

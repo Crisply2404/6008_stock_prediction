@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT))
 import numpy as np
 
 from src.baselines import predict_baselines
-from src.data import FEATURES, load_dataset
+from src.data import load_dataset
 from src.evaluate import comparison_table, evaluate, plot_comparison
 
 
@@ -42,15 +42,19 @@ def package_versions(names):
 
 def run(config, output, models):
     """Run a reproducible validation experiment / 执行可追溯的验证集实验。"""
+    # Fail before training or creating output / 在训练和创建输出目录前检查配置。
+    missing = [name for name in models if name != "baselines" and name not in config]
+    if missing:
+        raise ValueError(f"Missing model settings: {', '.join(missing)}; select a matching --config")
     seed = config["seed"]
     random.seed(seed)
     np.random.seed(seed)
     torch = None
-    if "patchtst" in models:
+    if any(name in models for name in ("patchtst", "lstm", "gru")):
         try:
             import torch
         except ModuleNotFoundError as exc:
-            raise RuntimeError("PatchTST requires torch; run LightGBM alone or install torch") from exc
+            raise RuntimeError("PatchTST/LSTM/GRU require torch; install the project PyTorch dependency") from exc
         torch.manual_seed(seed)
         torch.set_num_threads(4)
         torch.use_deterministic_algorithms(True)
@@ -61,7 +65,7 @@ def run(config, output, models):
     save_json(output / "config.json", config)
     save_json(output / "data_audit.json", dataset.audit)
     save_json(output / "preprocessing.json", {
-        "features": FEATURES, "window": config["window"],
+        "features": dataset.features, "window": config["window"],
         "feature_mean": dataset.feature_mean.tolist(), "feature_scale": dataset.feature_scale.tolist(),
         "target_mean": dataset.target_mean, "target_scale": dataset.target_scale,
     })
@@ -105,6 +109,21 @@ def run(config, output, models):
             torch.save({"model_kwargs": training["patchtst"]["model_kwargs"],
                         "state_dict": {k: v.detach().cpu() for k, v in model.state_dict().items()}},
                        output / "patchtst.pt")
+        if "lstm" in models:
+            from src.models.lstm import fit_predict
+            model, predictions["lstm"], training["lstm"] = fit_predict(
+                dataset, config["lstm"], seed)
+            torch.save({"model_kwargs": training["lstm"]["model_kwargs"],
+                        "sequence_length": training["lstm"]["sequence_length"],
+                        "state_dict": {k: v.detach().cpu() for k, v in model.state_dict().items()}},
+                       output / "lstm.pt")
+        if "gru" in models:
+            from src.models.gru import fit_predict
+            model, predictions["gru"], training["gru"] = fit_predict(
+                dataset, config["gru"], seed)
+            torch.save({"model_kwargs": training["gru"]["model_kwargs"],
+                        "state_dict": {k: v.detach().cpu() for k, v in model.state_dict().items()}},
+                       output / "gru.pt")
         metrics = {name: evaluate(dataset.validation.y, p) for name, p in predictions.items()}
         # Majority label is fitted on train; do not invent a return magnitude for it.
         majority_up = bool((dataset.train.y > 0).mean() > 0.5)
@@ -143,15 +162,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "configs/aapl.json",
                         help="JSON configuration (default: configs/aapl.json)")
-    parser.add_argument("--models", nargs="+", choices=["baselines", "xgboost", "lightgbm", "patchtst"],
-                        default=["xgboost", "patchtst"],
-                        help="Models to train; baselines are always included")
+    parser.add_argument("--nasdaq-features", choices=["all", "return_volume"],
+                        help="Override config Nasdaq features: all (8 total) or return_volume (6 total)")
+    parser.add_argument("--models", nargs="+", choices=["baselines", "xgboost", "lightgbm", "patchtst", "lstm", "gru"],
+                        default=["xgboost", "lightgbm", "patchtst", "lstm", "gru"],
+                        help="Models to train (default: all five); baselines are always included")
     parser.add_argument("--run-name", default=datetime.now(timezone.utc).strftime("validation_%Y%m%dT%H%M%S_%fZ"),
                         help="New folder name under artifacts/; must not already exist")
     args = parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_-]+", args.run_name):
         parser.error("run-name must contain only letters, digits, underscores and hyphens")
     config = json.loads(args.config.read_text(encoding="utf-8-sig"))
+    if args.nasdaq_features is not None:
+        config["nasdaq_features"] = args.nasdaq_features
     run(config, ROOT / "artifacts" / args.run_name, args.models)
 
 

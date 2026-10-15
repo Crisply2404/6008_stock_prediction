@@ -10,3 +10,7 @@ artifacts/
 Stock price project.docx
 __MACOSX/
 ._*
+
+# Original teammate delivery folders; integrated code lives in src/ and configs/.
+/lstm/
+/gru/
