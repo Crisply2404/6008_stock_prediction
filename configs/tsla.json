@@ -30,7 +30,7 @@
     "d_ff": 64,
     "dropout": 0.2,
     "learning_rate": 0.0003,
-    "weight_decay": 0.01,
+    "weight_decay": 0.05,
     "batch_size": 64,
     "epochs": 30,
     "patience": 6,
